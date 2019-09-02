@@ -1,0 +1,8 @@
+.button {
+  padding: 3px 5px;
+  border: 1px solid black;
+}
+
+.button.rounded-button {
+  border-radius: 5px;
+}
