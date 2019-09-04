@@ -16,7 +16,9 @@ type TilemapCanvasProps = {
   height: number,
   width: number,
   id: string,
-  onClick: Function,
+  onMouseDown: Function,
+  onMouseUp?: Function,
+  onMouseMove?: Function,
   selected?: Position,
   gaps?: number,
   style?: object,
@@ -24,20 +26,24 @@ type TilemapCanvasProps = {
 
 type TilemapCanvasState = {
   context: CanvasRenderingContext2D,
+  mousePos: Position,
 }
 
+/** Simple Canvas Component */
 export class Canvas extends React.Component<CanvasProps, {}> {
   render() {   
     return <canvas id={this.props.id} width={this.props.width} height={this.props.height} style={this.props.style}></canvas>
   }
 }
 
+/**Tilemap Canvas Component */
 export class TilemapCanvas extends React.Component<TilemapCanvasProps, TilemapCanvasState> {
   public static defaultProps = {
     gaps: 0
   };
 
   renderTilemap() {
+    this.eraseCanvas();
     this.props.tilemap.forEach((tilemapTile) => {
       this.renderTile(tilemapTile);
     });
@@ -48,6 +54,14 @@ export class TilemapCanvas extends React.Component<TilemapCanvasProps, TilemapCa
     tilemapTile.layers.forEach((tile) => {
       this.state.context.drawImage(tile.image, coordinates.x, coordinates.y);
     });
+  }
+
+  eraseCanvas() {
+    this.state.context.lineWidth = this.props.gaps;
+    this.state.context.fillStyle = "white";
+    this.state.context.beginPath();
+    this.state.context.rect(0, 0, this.props.width, this.props.height);
+    this.state.context.fill();
   }
 
   updateSelected() {
@@ -91,7 +105,7 @@ export class TilemapCanvas extends React.Component<TilemapCanvasProps, TilemapCa
 
   componentDidMount() {
     this.setContext();
-    this.renderTilemap();
+    // this.renderTilemap();
   }
 
   setContext() {
@@ -101,9 +115,27 @@ export class TilemapCanvas extends React.Component<TilemapCanvasProps, TilemapCa
     this.setState({context: context});
   }
 
-  onClick(mouseEvent: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+  onMouseDown(mouseEvent: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
     let coordinates = new Position(mouseEvent.nativeEvent.offsetX, mouseEvent.nativeEvent.offsetY)
-    this.props.onClick(this.coordinatesToTilePosition(coordinates));
+    this.props.onMouseDown(this.coordinatesToTilePosition(coordinates));
+  }
+
+  onMouseMove(mouseEvent: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    if(this.props.onMouseMove) {
+      let coordinates = new Position(mouseEvent.nativeEvent.offsetX, mouseEvent.nativeEvent.offsetY);
+      let position = this.coordinatesToTilePosition(coordinates);
+      if(!this.state.mousePos || !this.state.mousePos.equals(position))  {
+        this.setState({mousePos: position});
+        this.props.onMouseMove(position);
+      }
+    }
+  }
+  
+  onMouseUp(mouseEvent: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
+    if(this.props.onMouseUp) {
+      let coordinates = new Position(mouseEvent.nativeEvent.offsetX, mouseEvent.nativeEvent.offsetY)
+      this.props.onMouseUp(this.coordinatesToTilePosition(coordinates));
+    }
   }
 
   coordinatesToTilePosition(coordinates: Position) {
@@ -126,7 +158,9 @@ export class TilemapCanvas extends React.Component<TilemapCanvasProps, TilemapCa
     width={this.props.width} 
     height={this.props.height} 
     style={this.props.style}
-    onClick={(e) => {this.onClick(e)}}></canvas>
+    onMouseDown={(e) => {this.onMouseDown(e)}}
+    onMouseMove={(e) => {this.onMouseMove(e)}}
+    onMouseUp={(e) => {this.onMouseUp(e)}}></canvas>
   }
 
 }

@@ -1,4 +1,5 @@
-import { Unique } from './Helper';
+import { Unique, range } from './Helper';
+import { string } from 'prop-types';
 
 export class Position {
   x: number;
@@ -11,6 +12,30 @@ export class Position {
   toString() {
     return "{" + this.x + "," + this.y + "}";
   }
+
+  equals(pos: Position) {
+    if(this.x === pos.x && this.y === pos.y) return true;
+    return false
+  }
+
+  difference(pos: Position) {
+    return new Position(this.x - pos.x, this.y - pos.y);
+  }
+
+  distance(pos: Position) {
+    let difference = this.difference(pos);
+    return Math.sqrt(Math.pow(difference.x, 2) * Math.pow(difference.y, 2));
+  }
+
+  static fillSquareBetween(a: Position, b: Position): Array<Position> {
+    let list  = new Array<Position>();
+    range(Math.min(a.x, b.x), Math.max(a.x, b.x) + 1).forEach((x) => {
+      range(Math.min(a.y, b.y), Math.max(a.y, b.y) + 1).forEach((y) => {
+        list.push(new Position(x, y));
+      });
+    });
+    return list;
+  }
 }
 
 export class Tile extends Unique {
@@ -19,7 +44,8 @@ export class Tile extends Unique {
   height: number = 0;
   image: HTMLImageElement = null;
   type: String;
-  props = {};
+  props: any = new Object(); // TODO: change?
+
   constructor(name: String) {
     super();
     if(name) this.name = name;
@@ -33,8 +59,8 @@ export class Tile extends Unique {
 }
 
 export class TilemapTile {
-  props: Object = {};
-  layers: Array<Tile> = [];
+  props: Object = new Object();
+  layers: Map<number, Tile> = new Map<number, Tile>();
   position: Position;
 
   constructor(position: Position, tile: Tile, layer: number) {
@@ -43,29 +69,26 @@ export class TilemapTile {
   }
 
   addTile(tile: Tile, layer: number) {
-    this.layers[layer] = tile;
+    this.layers.set(layer, tile);
     this.props = Object.assign(this.props, tile.props);
   }
 
   removeTile(layer: number) {
-    if(this.layers[layer]) {
-      this.layers[layer].props
-      this.layers[layer] = null;
-      for(let i = this.layers.length; i > 0; i--) {
-        if(this.layers[i]) break;
-        this.layers.pop();
-      };
-
-      // reset properties
-      this.props = {};
-      for(let i = 0; i < this.layers.length; i++) {
-        this.props = Object.assign(this.props, this.layers[i].props);
-      }
+    if(this.layers.has(layer)) {
+      this.layers.delete(layer);
+      this.resetProperties();
     }
   }
   
+  resetProperties() {
+    this.props = {};
+    this.layers.forEach((tile) => {
+      this.props = Object.assign(this.props, tile.props);
+    });
+  }
+
   getTile(layer: number) {
-    if(this.layers[layer]) return this.layers[layer];
+    if(this.layers.has(layer)) return this.layers.get(layer);
     return null;
   }
 }
@@ -91,6 +114,38 @@ export class Tilemap {
     let tilemapTile = this.getTilesAtPosition(position);
     if(tilemapTile) tilemapTile.addTile(tile, layer);
     else this.setTilemapTile(position, new TilemapTile(position, tile, layer));
+  }
+
+  addTemporaryTile(position: Position, tile: Tile, layer: number) {
+    tile.props = Object.assign(tile.props, {temporary: true});
+    this.addTile(position, tile, layer);
+  }
+
+  removeTemporaryTiles(): Tilemap {
+    this.getTilesAsList().forEach((tilemapTile) => {
+      if(tilemapTile.props.hasOwnProperty("temporary")) {
+        tilemapTile.layers.forEach((tile, i) => {
+          if(tile.props.temporary) {
+            tilemapTile.removeTile(i);
+          }
+        });
+      }
+    });
+    return this;
+  }
+
+  saveTemporaryTiles(): Tilemap {
+    this.getTilesAsList().forEach((tilemapTile) => {
+      if(tilemapTile.props.hasOwnProperty("temporary")) {
+        tilemapTile.layers.forEach((tile, i) => {
+          if(tile.props.temporary) {
+            delete tile.props.temporary;
+          }
+        });
+        tilemapTile.resetProperties();
+      }
+    });
+    return this;
   }
 
   getTilesAtPosition(position: Position): TilemapTile {
