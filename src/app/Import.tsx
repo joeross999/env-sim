@@ -2,13 +2,11 @@ import { Tile } from './TilemapClasses';
 
 enum importStates {"loading", "ready", "complete"};
 
-let tiles: Map<String, Tile> = new Map<String, Tile>();
-
 export class Import {
   state: importStates = importStates.loading;
   importSize: number = 0;
   saved: number = 0;
-  tiles: Map<String, Tile> = new Map<String, Tile>();
+  tiles: Map<string, Tile> = new Map<string, Tile>();
   readyCallback: Function;
 
   constructor(size: number, callback: Function) {

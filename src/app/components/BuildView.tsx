@@ -4,28 +4,26 @@ import { SectionBox } from './SectionBox';
 import { Clickable } from './Clickable';
 import { Icon } from './Icon';
 import { RoundedButton, Select } from './FormElements';
-import { Import } from '../Import';
-// import { Data } from '../Data';
+import { Modal } from './Modal';
+import { ImportView } from './ImportView';
 import './css/BuildView.css';
 import * as eraserIcon from '../../resources/eraser.png';
 import * as paintBrushIcon from '../../resources/paint-brush.png';
 import * as boxIcon from '../../resources/selection.png';
 import * as $ from "jquery";
 import { Tile, Tilemap, Position, TilemapTile } from '../TilemapClasses';
-import { string } from 'prop-types';
 
-enum states {draw, box, erase};
+enum states {draw, box, erase, import};
 let iconSize = 32;
 
 type State = {
   BuildState: states,
   paletteWidth: number,
-  tileset: Map<String, Tile>,
+  tileset: Map<string, Tile>,
   gameTilemap: Tilemap,
   gameTilemapList: Array<TilemapTile>,
   paletteTilemap: Tilemap,
   paletteTilemapList: Array<TilemapTile>,
-  currentImport: Import,
   currentTile: Tile,
   selectedTilePosition: Position,
   mouseDown: Position,
@@ -34,20 +32,15 @@ type State = {
 
 
 
-let importTilesInput: JQuery<HTMLInputElement>;
 let gameCtx: CanvasRenderingContext2D;
 let paletteCtx: CanvasRenderingContext2D;
 
 const Layers = new Map<string, string>([["0", "Layer 0"], ["1", "Layer 1"], ["2", "Layer 2"]]);
 
 export class BuildView extends React.Component<{}, State> {
-  // gameTilemap: Tilemap;
-  // paletteTilemap: Tilemap;
   
   constructor(props: any) {
     super(props);
-    // this.gameTilemap = new Tilemap(800/16, 608/16),
-    // this.paletteTilemap = new Tilemap(100, 4),
     this.state = {
       BuildState: states.draw,
       paletteWidth: 171,
@@ -55,8 +48,7 @@ export class BuildView extends React.Component<{}, State> {
       gameTilemapList: new Array<TilemapTile>(),
       paletteTilemap: new Tilemap(100, 4),
       paletteTilemapList: new Array<TilemapTile>(),
-      tileset: new Map<String, Tile>(),
-      currentImport: null,
+      tileset: new Map<string, Tile>(),
       currentTile: null,
       selectedTilePosition: null,
       mouseDown: null,
@@ -68,49 +60,35 @@ export class BuildView extends React.Component<{}, State> {
     this.setState({BuildState: state});
   }
   importTiles() {
-    console.log('importTiles');
-    console.log(importTilesInput);
-    importTilesInput.trigger('click');
+    this.setState({BuildState: states.import})
   }
 
   componentDidMount() {
-    importTilesInput = $('#importTiles');
-    importTilesInput.on('change', () => {
-      let fileList = importTilesInput.get(0).files;
-      this.setState({currentImport: new Import(fileList.length, () => {this.importReadyCallBack()})});
-      this.state.currentImport.upload(fileList);
-    });
-
     let game: JQuery<HTMLCanvasElement> = $('#game');
     gameCtx = game.get(0).getContext('2d');
-    game.on('click', (event) => {
-
-    });
 
     let palette: JQuery<HTMLCanvasElement> = $('#palette');
-    paletteCtx = game.get(0).getContext('2d');
+    paletteCtx = palette.get(0).getContext('2d');
 
     let width = $('#settingsWrapper').width();
     this.setState({paletteWidth: width});
   }
 
-  importReadyCallBack() {
-    if(confirm("import tiles?")) {
-      this.setState({tileset: new Map([...this.state.currentImport.tiles, ...this.state.tileset])});
-      this.state.currentImport.completed();
-      this.updatePalette(this.state.tileset);
-    }
-    console.log(this.state.tileset);
+  importReadyCallBack(tileset: Map<string, Tile>) {
+      this.setState({
+        tileset: new Map([...tileset, ...this.state.tileset]),
+        BuildState: states.draw,
+      });
+      this.updatePalette(new Map([...tileset, ...this.state.tileset]));
   }
 
-  updatePalette(tileset: Map<String, Tile>) {
+  updatePalette(tileset: Map<string, Tile>) {
     let newPaletteTilemap = new Tilemap(100, 4);
     let counter = 0;
     tileset.forEach((tile) => {
       newPaletteTilemap.addTile(new Position(counter, 0), tile, 0);
       counter++;
     });
-    // this.paletteTilemap =  newPaletteTilemap;
     this.setState({
       paletteTilemap: newPaletteTilemap,
       paletteTilemapList: newPaletteTilemap.getTilesAsList(),
@@ -187,7 +165,8 @@ export class BuildView extends React.Component<{}, State> {
     this.setState({currentLayer: Number(event.currentTarget.value)});
   }
 
-  render() {   
+  render() {
+
     return (
       <div id="buildView">
         <div id="gameWrapper">
@@ -232,6 +211,11 @@ export class BuildView extends React.Component<{}, State> {
           <Select id="layerSelect" options={Layers} selected={String(this.state.currentLayer)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {this.layerSelectChange(e)}}></Select>
           <input type="file" hidden multiple id="importTiles" />
         </div>
+        {this.state.BuildState === states.import &&
+          <Modal id="import-modal" background="rgba(0, 0, 0, .5)" foreground="white" width={30} height={80}>
+            <ImportView onSubmit={(tileset: Map<string, Tile>) => {this.importReadyCallBack(tileset)}}></ImportView>
+          </Modal>
+        }
       </div>
     )
   }

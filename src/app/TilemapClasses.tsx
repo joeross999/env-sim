@@ -24,7 +24,7 @@ export class Position {
 
   distance(pos: Position) {
     let difference = this.difference(pos);
-    return Math.sqrt(Math.pow(difference.x, 2) * Math.pow(difference.y, 2));
+    return Math.sqrt(Math.pow(difference.x, 2) + Math.pow(difference.y, 2));
   }
 
   static fillSquareBetween(a: Position, b: Position): Array<Position> {
@@ -39,22 +39,22 @@ export class Position {
 }
 
 export class Tile extends Unique {
-  name: String = "";
+  name: string = "";
   width: number = 0;
   height: number = 0;
   image: HTMLImageElement = null;
-  type: String;
+  type: string;
   props: any = new Object(); // TODO: change?
 
-  constructor(name: String) {
+  constructor(name: string) {
     super();
     if(name) this.name = name;
   }
 
   setImage(image: HTMLImageElement) {
     this.image = image;
-    this.width = image.width;
-    this.height = image.height;
+    this.width = 16; //Todo: Change to tilesize
+    this.height = 16;
   }
 }
 

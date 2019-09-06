@@ -1,8 +1,8 @@
 export class Comparable {
 
-  private id: String;
+  private id: string;
 
-  constructor(id: String) {
+  constructor(id: string) {
     this.id = id;
   }
   equals(other: Comparable) {
@@ -15,7 +15,7 @@ export class Comparable {
 
 export class Unique {
   static nextIdNum = 0;
-  id: String;
+  id: string;
   constructor() {
     this.id = String(Unique.nextIdNum++);
   }
