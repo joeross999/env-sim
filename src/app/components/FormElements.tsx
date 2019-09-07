@@ -22,7 +22,7 @@ export class RoundedButton extends React.Component<ButtonProps, {}> {
 }
 
 type SelectProps = {
-  id: string,
+  class: string,
   options: Map<string, string>,
   onChange: Function,
   selected: string
@@ -34,7 +34,7 @@ export class Select extends React.Component<SelectProps, {}> {
     this.props.options.forEach((label, key) => {
       optionList.push(<option value={key} key={key}>{label}</option>);
     });
-    return (<select value={this.props.selected} id={this.props.id} onChange={(e) => this.props.onChange(e)}>
+    return (<select value={this.props.selected} className={this.props.class} onChange={(e) => this.props.onChange(e)}>
       {optionList}
     </select>)
   }

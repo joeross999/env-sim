@@ -30,8 +30,6 @@ type State = {
   currentLayer: number,
 }
 
-
-
 let gameCtx: CanvasRenderingContext2D;
 let paletteCtx: CanvasRenderingContext2D;
 
@@ -100,7 +98,14 @@ export class BuildView extends React.Component<{}, State> {
     if(this.state.currentTile) {
       if(this.state.BuildState === states.draw) {
         this.state.gameTilemap.addTile(position, this.state.currentTile, this.state.currentLayer);
-        this.setState((state:State): Readonly<{}> => {
+        this.setState((state: State): Readonly<{}> => {
+          return {
+            gameTilemapList: state.gameTilemap.getTilesAsList(),
+          }
+        });
+      } else if(this.state.BuildState === states.erase) {
+        this.state.gameTilemap.removeTile(position, this.state.currentLayer);
+        this.setState((state: State): Readonly<{}> => {
           return {
             gameTilemapList: state.gameTilemap.getTilesAsList(),
           }
@@ -111,7 +116,6 @@ export class BuildView extends React.Component<{}, State> {
   }
 
   gameMouseUp(position: Position) {
-    console.log("gameMouseUp: " + position.toString())
     if(this.state.BuildState === states.box) {
       this.setState((state:State): Readonly<{}> => {
         return {
@@ -123,10 +127,11 @@ export class BuildView extends React.Component<{}, State> {
   }
 
   gameMouseMove(position: Position) {
-    console.log("gameMouseMove: " + position.toString());
     if(this.state.mouseDown) {
       if(this.state.BuildState === states.draw) {
         this.state.gameTilemap.addTile(position, this.state.currentTile, this.state.currentLayer);
+      } else if(this.state.BuildState === states.erase) {
+        this.state.gameTilemap.removeTile(position, this.state.currentLayer);
       } else if(this.state.BuildState === states.box) {
         this.state.gameTilemap.removeTemporaryTiles();
         this.setState( {
@@ -141,8 +146,6 @@ export class BuildView extends React.Component<{}, State> {
 
   drawTempBox(a: Position, b: Position, tilemap: Tilemap): Tilemap {
     let list: Array<Position> = Position.fillSquareBetween(a, b);
-    console.log("Position.fillSquareBetween(" + a + ", "+ b+")")
-    console.log(Position.fillSquareBetween(a, b))
     list.forEach((position) => {
       tilemap.addTemporaryTile(position, this.state.currentTile, this.state.currentLayer);
     });
@@ -150,8 +153,6 @@ export class BuildView extends React.Component<{}, State> {
   }
 
   selectTileFromPalette(position: Position) {
-    console.log("Palette clicked at position: " + position.toString());
-    console.log(this.state.paletteTilemap.getTile(position, 0));
     let selectedTile = this.state.paletteTilemap.getTile(position, 0);
     if(selectedTile) {
       this.setState({
@@ -208,7 +209,7 @@ export class BuildView extends React.Component<{}, State> {
           <Clickable onClick={() => {this.importTiles()}}>
             <RoundedButton>Import Tiles</RoundedButton>
           </Clickable>
-          <Select id="layerSelect" options={Layers} selected={String(this.state.currentLayer)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {this.layerSelectChange(e)}}></Select>
+          <Select class="layerSelect" options={Layers} selected={String(this.state.currentLayer)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {this.layerSelectChange(e)}}></Select>
           <input type="file" hidden multiple id="importTiles" />
         </div>
         {this.state.BuildState === states.import &&

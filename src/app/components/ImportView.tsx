@@ -54,6 +54,19 @@ export class ImportView extends React.Component<importViewProps, importViewState
     console.log(this.state.tileset);
   }
 
+  updateTile(key: string, tileType: string, options: Map<string, string>) {
+    console.log("updateTile: "  + key + ", " + tileType + ", " + JSON.parse(JSON.stringify(options.entries())));
+    this.setState((state) => {
+      let newTileset = new Map<string, Tile>([...state.tileset]);
+      let tile = newTileset.get(key);
+      tile.type = tileType;
+      tile.props = new Map<string, string>([...options]);
+      return {
+        tileset: newTileset
+      }
+    });
+  }
+
   render() {   
     switch(this.state.state) {
       case importStates.type: 
@@ -77,7 +90,7 @@ export class ImportView extends React.Component<importViewProps, importViewState
           <div id="import">
             Set the properties of your imports (this can be completed later...)
             {[...this.state.tileset.keys()].map((key) => {
-              return <TilePropertiesSelector key={this.state.tileset.get(key).id} tile={this.state.tileset.get(key)} onChange={() => {}}></TilePropertiesSelector>
+              return <TilePropertiesSelector key={this.state.tileset.get(key).id} tile={this.state.tileset.get(key)} onChange={(tileType: string, options: Map<string, string>) => {this.updateTile(key, tileType, options)}}></TilePropertiesSelector>
             })}
             <Clickable onClick={() => {this.props.onSubmit(this.state.tileset)}}><Button>Import!</Button></Clickable>
           </div>

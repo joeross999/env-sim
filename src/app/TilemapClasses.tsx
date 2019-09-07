@@ -44,7 +44,7 @@ export class Tile extends Unique {
   height: number = 0;
   image: HTMLImageElement = null;
   type: string;
-  props: any = new Object(); // TODO: change?
+  props: Map<string, string> = new Map<string, string>();
 
   constructor(name: string) {
     super();
@@ -59,7 +59,7 @@ export class Tile extends Unique {
 }
 
 export class TilemapTile {
-  props: Object = new Object();
+  props: Map<string, string> = new Map<string, string>();
   layers: Map<number, Tile> = new Map<number, Tile>();
   position: Position;
 
@@ -69,8 +69,8 @@ export class TilemapTile {
   }
 
   addTile(tile: Tile, layer: number) {
-    this.layers.set(layer, tile);
-    this.props = Object.assign(this.props, tile.props);
+    this.layers = new Map<number, Tile>([...this.layers.set(layer, tile)].sort());
+    this.props = new Map<string, string>([...this.props, ...tile.props]);
   }
 
   removeTile(layer: number) {
@@ -81,9 +81,9 @@ export class TilemapTile {
   }
   
   resetProperties() {
-    this.props = {};
+    this.props = new Map<string, string>();
     this.layers.forEach((tile) => {
-      this.props = Object.assign(this.props, tile.props);
+      this.props = new Map<string, string>([...this.props, ...tile.props]);
     });
   }
 
@@ -116,6 +116,12 @@ export class Tilemap {
     else this.setTilemapTile(position, new TilemapTile(position, tile, layer));
   }
 
+  removeTile(position: Position, layer: number) {
+    let tilemapTile = this.getTilesAtPosition(position);
+    if(tilemapTile)
+      tilemapTile.removeTile(layer);
+  }
+
   addTemporaryTile(position: Position, tile: Tile, layer: number) {
     tile.props = Object.assign(tile.props, {temporary: true});
     this.addTile(position, tile, layer);
@@ -125,7 +131,7 @@ export class Tilemap {
     this.getTilesAsList().forEach((tilemapTile) => {
       if(tilemapTile.props.hasOwnProperty("temporary")) {
         tilemapTile.layers.forEach((tile, i) => {
-          if(tile.props.temporary) {
+          if(tile.props.has('temporary') && tile.props.get('temporary')) {
             tilemapTile.removeTile(i);
           }
         });
@@ -138,8 +144,8 @@ export class Tilemap {
     this.getTilesAsList().forEach((tilemapTile) => {
       if(tilemapTile.props.hasOwnProperty("temporary")) {
         tilemapTile.layers.forEach((tile, i) => {
-          if(tile.props.temporary) {
-            delete tile.props.temporary;
+          if(tile.props.has('temporary') && tile.props.get('temporary')) {
+            tile.props.delete('temporary');
           }
         });
         tilemapTile.resetProperties();
