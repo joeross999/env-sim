@@ -90,7 +90,11 @@ export class ImportView extends React.Component<importViewProps, importViewState
           <div id="import">
             Set the properties of your imports (this can be completed later...)
             {[...this.state.tileset.keys()].map((key) => {
-              return <TilePropertiesSelector key={this.state.tileset.get(key).id} tile={this.state.tileset.get(key)} onChange={(tileType: string, options: Map<string, string>) => {this.updateTile(key, tileType, options)}}></TilePropertiesSelector>
+              return <TilePropertiesSelector 
+                  key={this.state.tileset.get(key).id} 
+                  tile={this.state.tileset.get(key)} 
+                  onChange={(tileType: string, options: Map<string, string>) => {this.updateTile(key, tileType, options)}}
+                  ></TilePropertiesSelector>
             })}
             <Clickable onClick={() => {this.props.onSubmit(this.state.tileset)}}><Button>Import!</Button></Clickable>
           </div>

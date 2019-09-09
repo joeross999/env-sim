@@ -12,6 +12,7 @@ import * as paintBrushIcon from '../../resources/paint-brush.png';
 import * as boxIcon from '../../resources/selection.png';
 import * as $ from "jquery";
 import { Tile, Tilemap, Position, TilemapTile } from '../TilemapClasses';
+import { TilePropertiesSelector } from './TilePropertiesSelector';
 
 enum states {draw, box, erase, import};
 let iconSize = 32;
@@ -166,6 +167,19 @@ export class BuildView extends React.Component<{}, State> {
     this.setState({currentLayer: Number(event.currentTarget.value)});
   }
 
+  updateTile(tileId: string, tileType: string, options: Map<string, string>) {
+    console.log("updateTile: "  + tileId + ", " + tileType + ", " + JSON.parse(JSON.stringify(options.entries())));
+    this.setState((state) => {
+      let newTileset = new Map<string, Tile>([...state.tileset]);
+      let tile = newTileset.get(tileId);
+      tile.type = tileType;
+      tile.props = new Map<string, string>([...options]);
+      return {
+        tileset: newTileset
+      }
+    });
+  }
+
   render() {
 
     return (
@@ -206,11 +220,25 @@ export class BuildView extends React.Component<{}, State> {
               width={this.state.paletteWidth}
               onMouseDown={(e: Position) => {this.selectTileFromPalette(e)}}>
           </TilemapCanvas>
+          { this.state.currentTile && 
+            <SectionBox>
+              <TilePropertiesSelector 
+                tile={this.state.tileset.get(this.state.currentTile.id)} 
+                onChange={
+                  (tileType: string, options: Map<string, string>) => {
+                    this.updateTile(this.state.currentTile.id, tileType, options)
+                  }
+                }>
+              </TilePropertiesSelector>
+            </SectionBox>
+          }
+          <SectionBox>
           <Clickable onClick={() => {this.importTiles()}}>
             <RoundedButton>Import Tiles</RoundedButton>
           </Clickable>
           <Select class="layerSelect" options={Layers} selected={String(this.state.currentLayer)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {this.layerSelectChange(e)}}></Select>
           <input type="file" hidden multiple id="importTiles" />
+          </SectionBox>
         </div>
         {this.state.BuildState === states.import &&
           <Modal id="import-modal" background="rgba(0, 0, 0, .5)" foreground="white" width={30} height={80}>
